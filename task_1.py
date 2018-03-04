@@ -7,7 +7,6 @@ from pyspark import SparkConf
 conf = SparkConf().setMaster("local[*]")
 context = SparkContext.getOrCreate(conf)
 geotweets = context.textFile("data/geotweets.tsv")
-#records = geotweets.map(lambda x: x.split("\t")).sample(False, 0.1, 5)
 records = geotweets.map(lambda x: x.split("\t"))
 
 # 1a) Count the number of tweets in our dataset
@@ -56,8 +55,7 @@ averageWordsTweet = records.map(lambda rec: len(rec[10].split())).sum()
 averageLengthWords = averageWordsTweet / numberOfTweets
 print("Average words per tweet: " + str(averageLengthWords))
 
-#filtered = records.filter(lambda rec: (rec[1] == "Argentina"))
-
+# Parallelize all answers as a rdd to be written out
 results = context.parallelize([
     numberOfTweets,
     countDistinctUsernames,
@@ -72,4 +70,5 @@ results = context.parallelize([
     averageLengthWords
 ])
 
+# Write rdd with answers to a tsv file
 results.coalesce(1,True).saveAsTextFile('data/result_1.tsv')
