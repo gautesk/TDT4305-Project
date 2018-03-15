@@ -51,9 +51,3 @@ usTweets = records.filter(lambda x: x[4] in cities) \
 
 
 usTweets.coalesce(1,True).saveAsTextFile('data/result_7.tsv')
-"""
-with open('data/result_7.tsv', 'w') as outputfile:
-    for line in cities:
-        outputfile.write(line + "\n")
-outputfile.close()
-"""
