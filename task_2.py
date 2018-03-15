@@ -4,19 +4,11 @@ findspark.init()
 from pyspark import SparkContext
 from pyspark import SparkConf
 
-conf = SparkConf().setMaster("local[*]")
-context = SparkContext.getOrCreate(conf)
-geotweets = context.textFile("data/geotweets.tsv", use_unicode=True)
+sc = SparkContext.getOrCreate(SparkConf().setMaster("local[*]"))
+geotweets = sc.textFile("data/geotweets.tsv")
 records = geotweets.map(lambda x: x.split("\t"))
 
-# Map our daya to (key, value) pair with (country, 1)
-# Reduce by key (country) to count tweets from each
-# Sort by country first to get alphabetical sort, required for countries with equal tweets in next sort
-# Finally sort by value
-tweetsPerCountry = records.map(lambda x: (x[1], 1)) \
-    .reduceByKey(lambda x,y: x+y) \
-    .sortByKey(lambda x: x) \
-    .sortBy(lambda x: x[1], False)
-
-# Write out results
-tweetsPerCountry.coalesce(1,True).saveAsTextFile('data/result_2')
+countryTweetCount = records.map(lambda rec: (rec[1], 1)).reduceByKey(lambda x,y: x+y)
+sortedCount = countryTweetCount.sortByKey(True,1)
+reallySortedCount = sortedCount.sortBy(lambda x: x[1], False)
+reallySortedCount.coalesce(1,True).saveAsTextFile('data/result_5.tsv')
