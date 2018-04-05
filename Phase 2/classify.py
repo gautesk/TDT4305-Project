@@ -2,15 +2,10 @@ import argparse as ap
 from pyspark import SparkContext
 from pyspark import SparkConf
 
-
-def initSpark(inputfile):
-    conf = SparkConf().setMaster("local[*]")
-    context = SparkContext.getOrCreate(conf)
-    rdd = context.textFile(inputfile)
-    return rdd
-
-def classifyTweet(training_data, tweet):
+#def classifyTweet(training_data, tweet):
     # Implementere Naive Bayes Classifier
+    #city_count = training_data.map(lambda rec: (rec[0], 1)).reduceByKey(lambda x,y: x+y)
+    #training_data = training_data.reduceByKey(lambda x,y: x+ "\t" + y)
 
     # Returnere rdd-objekt (Sted, Sannsynlighet) med raden med høyest sannsynlighet
 
@@ -21,8 +16,37 @@ parser.add_argument('-i', '--input', dest='input_tweet')
 parser.add_argument('-o', '--output', dest='output_file', default="./data/output1.tsv")
 args = parser.parse_args()
 
-training_data = initSpark(args.training_data)
-tweet = open(args.input_tweet, 'r').readline()
+# Initiate Spark
+conf = SparkConf().setMaster("local[*]")
+context = SparkContext.getOrCreate(conf)
+
+# Initiate stopwords
+stopWords = []
+with open('../data/stop_words.txt', 'r') as stopwords:
+    for word in stopwords:
+        stopWords.append(word.strip())
+stopwords.close()
+
+# Initiate rdd-ene våre
+training_data = context.textFile(args.training_data)
+training_data = training_data.sample(False, 0.005, 5)
+training_data = training_data.map(lambda x: x.split("\t")) \
+                    .map(lambda x: (x[4], x[10])) \
+                    .map(lambda x: (x[0], set(x[1].lower().split(" ")))) \
+                    .flatMap(lambda x: ((x[0], y) for y in x[1])) \
+                    .filter(lambda x: x[1] not in stopWords and len(x[1]) > 1) \
+                    .map(lambda x: ((x[0], x[1]), 1)) \
+                    .reduceByKey(lambda x,y: x+y) \
+                    .sortBy(lambda x: x[1], False) \
+                    .take(10)
+
+print(training_data)
+
+#tweet = context.textFile(args.input_tweet)
+#tweet = open(args.input_tweet, 'r').readline()
+tweet = "Hallo"
+
+# Snurr film og skriv ut resultatet til fil
 tweet_location = classifyTweet(training_data, tweet)
 tweet_location.saveAsTextFile(args.output_file)
 
