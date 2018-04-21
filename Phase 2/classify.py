@@ -14,7 +14,6 @@ conf = SparkConf().setMaster("local[*]")
 context = SparkContext.getOrCreate(conf)
 
 # Read in stopwords.txt and create list of stopwords
-stopWords = []
 with open('../data/stop_words.txt', 'r') as stopwords:
     stopWords = [word.strip() for word in stopwords]
 
