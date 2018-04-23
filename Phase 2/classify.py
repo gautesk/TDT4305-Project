@@ -13,13 +13,9 @@ args = parser.parse_args()
 conf = SparkConf().setMaster("local[*]")
 context = SparkContext.getOrCreate(conf)
 
-# Read in stopwords.txt and create list of stopwords
-with open('../data/stop_words.txt', 'r') as stopwords:
-    stopWords = [word.strip() for word in stopwords]
-
 # Read input tweet file and make it into a list of words, excluding stopwords, 1-letter words and making everything lower case
 with open(args.input_tweet, 'r') as inputfile:
-    tweet = [x.lower().strip() for x in inputfile.readline().split() if x not in stopWords and len(x)>1]
+    tweet = [x.lower().strip() for x in inputfile.readline().split()]
 
 
 # Checks if word with index i is in list of words y. If it is, increment integer at position i in x
